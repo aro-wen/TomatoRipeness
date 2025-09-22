@@ -24,3 +24,4 @@ svm_env/
 # OS files
 .DS_Store
 Thumbs.db
+# Logs and databases
