@@ -25,6 +25,16 @@ st.title("🍅 Tomato Ripeness Classifier (SVM + CIELAB)")
 st.caption("Upload a photo. We extract CIELAB color features and predict ripeness using your trained SVM.")
 
 # ----------------------
+# Compatibility wrapper for st.image
+# ----------------------
+def show_image(img, caption=None):
+    """Display image with compatibility for Streamlit versions."""
+    try:
+        st.image(img, caption=caption, use_container_width=True)
+    except TypeError:
+        st.image(img, caption=caption, use_column_width=True)
+
+# ----------------------
 # Model loader (cached)
 # ----------------------
 @st.cache_resource
@@ -34,11 +44,7 @@ def load_model():
     return model, le
 
 def extract_lab_features(bgr_img, mask=None):
-    """
-    Compute mean & std of L*, a*, b* inside mask (or whole image if mask is None).
-    OpenCV LAB ranges: 0..255 for all channels; a*, b* ≈128 ~ neutral.
-    Returns (6,) [Lmean, Lstd, amean, astd, bmean, bstd].
-    """
+    """Compute mean & std of L*, a*, b* inside mask (or whole image if mask is None)."""
     if bgr_img is None or bgr_img.size == 0:
         return None
     H, W = bgr_img.shape[:2]
@@ -117,7 +123,7 @@ COLOR_BY_LABEL = {
 }
 
 def label_color(label: str) -> str:
-    return COLOR_BY_LABEL.get(canonical_label(label), "#7f8c8d")  # gray fallback
+    return COLOR_BY_LABEL.get(canonical_label(label), "#7f8c8d")
 
 # ----------------------
 # Load model
@@ -153,7 +159,7 @@ with left:
         st.info("Upload a photo of a tomato to classify.")
         st.stop()
     rgb = np.array(Image.open(up_img).convert("RGB"))
-    st.image(rgb, caption="Uploaded image", use_container_width=True)
+    show_image(rgb, caption="Uploaded image")
 
 # Processing
 bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
@@ -174,7 +180,7 @@ display_label = canonical_label(pred_label_raw)
 
 L_mean, L_std, a_mean, a_std, b_mean, b_std = feats
 
-# Build CSV in-memory (no pandas required)
+# Build CSV in-memory
 csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer)
 writer.writerow([
@@ -191,15 +197,16 @@ csv_bytes = csv_buffer.getvalue().encode("utf-8")
 with right:
     st.subheader("2) Prediction & features")
 
-    # Prediction pill and key metrics
-    colA, colB, colC, colD = st.columns([1.3, 1, 1, 1])
-    with colA:
-        st.markdown(
-            f"<span class='badge' style='background:{label_color(display_label)}'>"
-            f"Predicted: {display_label}</span>",
-            unsafe_allow_html=True,
-        )
-        st.caption("Model: SVM (RBF) on CIELAB stats")
+    # Prediction badge
+    st.markdown(
+        f"<span class='badge' style='background:{label_color(display_label)}'>"
+        f"Predicted: {display_label}</span>",
+        unsafe_allow_html=True,
+    )
+    st.caption("Model: SVM (RBF) on CIELAB stats")
+
+    # Metrics
+    colB, colC, colD = st.columns(3)
     with colB:
         st.metric("L* mean", f"{L_mean:.1f}")
         st.caption("Lightness")
@@ -210,18 +217,18 @@ with right:
         st.metric("b* mean", f"{b_mean:.1f}")
         st.caption("Blue ↔ Yellow")
 
-    # Visuals: original with crop overlay + analyzed region
+    # Visuals
     vis_col1, vis_col2 = st.columns(2)
     with vis_col1:
         disp = rgb.copy()
         if crop_mode == "Center crop" and show_crop_box:
             cv2.rectangle(disp, (int(x0), int(y0)), (int(x1), int(y1)), (0, 255, 0), 2)
-        st.image(disp, caption="Original (with crop overlay)", use_container_width=True)
+        show_image(disp, caption="Original (with crop overlay)")
     with vis_col2:
         crop_rgb = cv2.cvtColor(bgr_crop, cv2.COLOR_BGR2RGB)
-        st.image(crop_rgb, caption="Analyzed region", use_container_width=True)
+        show_image(crop_rgb, caption="Analyzed region")
 
-    # Detailed features + explanation
+    # Features + explanation
     with st.expander("See detailed CIELAB features", expanded=False):
         st.write(f"- **L*** mean: `{L_mean:.2f}` | std: `{L_std:.2f}`")
         st.write(f"- **a*** mean: `{a_mean:.2f}` | std: `{a_std:.2f}`")
@@ -234,7 +241,6 @@ with right:
         data=csv_bytes,
         file_name="tomato_ripeness_features.csv",
         mime="text/csv",
-        use_container_width=True,
     )
 
 st.info(
