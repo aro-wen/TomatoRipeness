@@ -1,0 +1,33 @@
+﻿# Dataset files
+data/
+datasets/
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+venv/
+ENV/
+
+# Model files
+*.pkl
+models/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.log
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Generated files
+confusion_matrix.png
+feature_importance.png
