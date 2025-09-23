@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍅 SariWise - AI-Powered Tomato Ripeness Classification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M20 20c0 11.046-8.954 20-20 20v20h40V20c0-11.046-8.954-20-20-20z'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .info-card h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .upload-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 3px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+            transform: translateY(-2px);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .image-preview {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .preview-img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+            background: linear-gradient(135deg, #ffffff, #fff8f8);
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .tomato-loading {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+        }
+
+        .tomato-body {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: relative;
+            left: 20px;
+            top: 30px;
+            animation: bounce 1.5s ease-in-out infinite;
+            box-shadow: 0 5px 15px rgba(255,107,107,0.3);
+        }
+
+        .tomato-body::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 15px;
+            width: 50px;
+            height: 15px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            border-radius: 50% 50% 0 0;
+            animation: wiggle 2s ease-in-out infinite;
+        }
+
+        .scanning-line {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            left: 10px;
+            top: 60px;
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #e74c3c;
+            border-radius: 50%;
+            animation: pulse 1.4s ease-in-out infinite both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0s; }
+
+        .loading-text {
+            font-size: 1.1em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .loading-subtext {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .classification-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .classification-result {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 3px solid #e74c3c;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .confidence-display {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .green { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .turning { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .ripe { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .rotten { background: linear-gradient(135deg, #8b4513, #654321); }
+
+        .danger-alert {
+            border: 3px solid #f44336 !important;
+            background: linear-gradient(135deg, #ffebee, #ffcdd2) !important;
+            animation: pulse-danger 2s infinite;
+        }
+
+        .spoilage-analysis {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .analysis-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #e74c3c;
+        }
+
+        .cielab-analysis {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .cielab-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .cielab-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .transport-analysis {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .transport-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .transport-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .safe { border-left: 4px solid #2ecc71; }
+        .unsafe { border-left: 4px solid #e74c3c; }
+
+        .safety-alert {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid rgba(231, 76, 60, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .model-status {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .demo-mode {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            40% {
+                transform: translateY(-15px) rotate(-2deg);
+            }
+            60% {
+                transform: translateY(-7px) rotate(1deg);
+            }
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-50px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(50px); opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0%, 80%, 100% {
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SariWise</h1>
+            <p>AI-Powered Tomato Ripeness Classification with CIELAB Analysis</p>
+            <p style="font-size: 0.9em; opacity: 0.8;">🔬 Real SVM Model • 🎯 CIELAB Features • 🚨 Spoilage Detection</p>
+        </div>
+
+        <div class="main-content">
+            <div class="model-status" id="modelStatus">
+                <strong>Checking model status...</strong>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <span class="emoji">🟢</span>
+                    <h3>Unripe/Green</h3>
+                    <p>0-30% red coloration<br>Needs more time to ripen</p>
+                </div>
+                <div class="info-card">
+                    <span class="emoji">🟡</span>
+                    <h3>Turning</h3>
+                    <p>30-89% red coloration<br>In transition phase</p>
+                </div>
+                <div class="info-card">
+                    <span class="emoji">🔴</span>
+                    <h3>Ripe</h3>
+                    <p>90%+ red coloration<br>Ready for harvest</p>
+                </div>
+                <div class="info-card">
+                    <span class="emoji">🟤</span>
+                    <h3>ROTTEN</h3>
+                    <p>Overripe/spoiled<br>⚠️ DO NOT CONSUME</p>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h2>Upload Your Tomato Image</h2>
+                <p>Upload a tomato image for AI-powered ripeness classification</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+                <button onclick="document.getElementById('fileInput').click()" class="upload-btn">
+                    📸 Upload for Analysis
+                </button>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="tomato-loading">
+                    <div class="tomato-body"></div>
+                    <div class="scanning-line"></div>
+                </div>
+                <div class="loading-text">🔬 AI Vision Processing...</div>
+                <div class="progress-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <div class="loading-subtext" id="loadingPhase">Extracting CIELAB features...</div>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="classification-header">
+                    <h2>🔬 Classification Results</h2>
+                </div>
+                
+                <div class="classification-result" id="mainResult">
+                    <div class="result-badge" id="resultBadge">RIPE - READY FOR HARVEST</div>
+                    <div class="confidence-display" id="confidenceDisplay">Confidence: 89.3%</div>
+                    <div id="safetyAlert"></div>
+                </div>
+
+                <div id="classificationResults"></div>
+                
+                <div class="spoilage-analysis">
+                    <h3>🦠 Spoilage Analysis</h3>
+                    <div class="analysis-grid" id="spoilageGrid"></div>
+                </div>
+
+                <div class="cielab-analysis">
+                    <h3>🎨 CIELAB Color Analysis</h3>
+                    <div class="cielab-grid" id="cielabGrid"></div>
+                </div>
+
+                <div class="transport-analysis">
+                    <h3>🚛 Transport Survivability</h3>
+                    <div class="transport-grid" id="transportGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modelInfo = null;
+
+        // Check model status on page load
+        async function checkModelStatus() {
+            try {
+                const response = await fetch('/model-info');
+                modelInfo = await response.json();
+                
+                const statusEl = document.getElementById('modelStatus');
+                
+                if (modelInfo.model_available) {
+                    statusEl.innerHTML = `
+                        <strong style="color: #27ae60;">✅ Model Ready</strong><br>
+                        SVM trained on ${modelInfo.classes.length} classes with ${modelInfo.feature_count} CIELAB features
+                    `;
+                    statusEl.style.background = '#d4edda';
+                    statusEl.style.borderColor = '#c3e6cb';
+                } else if (modelInfo.demo_mode) {
+                    statusEl.innerHTML = `
+                        <strong style="color: #856404;">🔬 Demo Mode Active</strong><br>
+                        Model not trained yet - showing sample predictions. Train model for real analysis.
+                    `;
+                    statusEl.classList.add('demo-mode');
+                } else {
+                    statusEl.innerHTML = `
+                        <strong style="color: #721c24;">❌ Model Not Available</strong><br>
+                        Please train the model using the provided training scripts.
+                    `;
+                    statusEl.style.background = '#f8d7da';
+                    statusEl.style.borderColor = '#f5c6cb';
+                }
+            } catch (error) {
+                console.error('Error checking model status:', error);
+                document.getElementById('modelStatus').innerHTML = `
+                    <strong style="color: #721c24;">⚠️ Server Connection Error</strong><br>
+                    Could not connect to the API server.
+                `;
+            }
+        }
+
+        // Loading animation phases
+        const loadingPhases = [
+            "🔍 Loading and preprocessing image...",
+            "🔬 Extracting CIELAB color features...",
+            "🧠 Running SVM classification...",
+            "🦠 Analyzing spoilage indicators...",
+            "📊 Calculating confidence scores...",
+            "🚛 Assessing transport survivability...",
+            "💡 Generating recommendations..."
+        ];
+
+        async function simulateLoadingPhases() {
+            const phaseElement = document.getElementById('loadingPhase');
+            
+            for (let i = 0; i < loadingPhases.length; i++) {
+                phaseElement.textContent = loadingPhases[i];
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+
+        // File upload handler
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Display preview
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('imagePreview').innerHTML = 
+                    `<img src="${event.target.result}" alt="Uploaded Image" class="preview-img">`;
+            };
+            reader.readAsDataURL(file);
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            // Simulate loading phases
+            await simulateLoadingPhases();
+
+            // Upload and analyze
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                console.error('Error:', error);
+                alert('Error uploading image. Please try again.');
+            }
+        });
+
+        function displayResults(result) {
+            // Update main result
+            const resultBadge = document.getElementById('resultBadge');
+            const confidenceDisplay = document.getElementById('confidenceDisplay');
+            const safetyAlert = document.getElementById('safetyAlert');
+            
+            const classEmojis = {
+                'unripe': '🟢',
+                'turning': '🟡', 
+                'ripe': '🔴',
+                'rotten': '🟤'
+            };
+
+            const classLabels = {
+                'unripe': 'UNRIPE/GREEN',
+                'turning': 'TURNING',
+                'ripe': 'RIPE - READY FOR HARVEST',
+                'rotten': 'ROTTEN - DO NOT CONSUME'
+            };
+
+            resultBadge.innerHTML = `${classEmojis[result.predicted_class]} ${classLabels[result.predicted_class]}`;
+            confidenceDisplay.innerHTML = `Confidence: ${(result.confidence * 100).toFixed(1)}%`;
+
+            // Add demo mode indicator if applicable
+            if (result.demo_mode) {
+                confidenceDisplay.innerHTML += ' <small>(Demo Mode)</small>';
+            }
+
+            // Safety alert
+            if (result.spoilage_analysis && result.spoilage_analysis.safety_warning) {
+                safetyAlert.innerHTML = `
+                    <div class="safety-alert">
+                        🚨 ${result.spoilage_analysis.safety_warning}
+                    </div>
+                `;
+            } else {
+                safetyAlert.innerHTML = '';
+            }
+
+            // Classification breakdown
+            const classificationResults = document.getElementById('classificationResults');
+            classificationResults.innerHTML = '';
+
+            Object.entries(result.class_probabilities).forEach(([className, probability]) => {
+                const percentage = (probability * 100).toFixed(1);
+                const isDangerous = className === 'rotten' && probability > 0.5;
+                
+                classificationResults.innerHTML += `
+                    <div class="result-item ${isDangerous ? 'danger-alert' : ''}">
+                        <span style="font-weight: bold; font-size: 1.1em;">
+                            ${classEmojis[className]} ${classLabels[className]}
+                        </span>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${className}" style="width: ${percentage}%"></div>
+                        </div>
+                        <span style="font-weight: bold; font-size: 1.2em;">
+                            ${percentage}%
+                        </span>
+                    </div>
+                `;
+            });
+
+            // Spoilage Analysis
+            if (result.spoilage_analysis) {
+                const spoilageGrid = document.getElementById('spoilageGrid');
+                spoilageGrid.innerHTML = `
+                    <div class="analysis-item">
+                        <strong>Mold Detection</strong><br>
+                        <span style="color: #e74c3c; font-weight: 600; font-size: 1.1em;">
+                            ${result.spoilage_analysis.mold_detection.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>Black Spots</strong><br>
+                        <span style="color: #e74c3c; font-weight: 600; font-size: 1.1em;">
+                            ${result.spoilage_analysis.black_spots.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>Brown Decay</strong><br>
+                        <span style="color: #e74c3c; font-weight: 600; font-size: 1.1em;">
+                            ${result.spoilage_analysis.brown_decay.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="analysis-item">
+                        <strong>Texture Loss</strong><br>
+                        <span style="color: #e74c3c; font-weight: 600; font-size: 1.1em;">
+                            ${result.spoilage_analysis.texture_loss.toFixed(1)}%
+                        </span>
+                    </div>
+                `;
+            }
+
+            // CIELAB Analysis
+            if (result.cielab_analysis) {
+                const cielabGrid = document.getElementById('cielabGrid');
+                cielabGrid.innerHTML = `
+                    <div class="cielab-item">
+                        <strong>L* (Lightness)</strong><br>
+                        <span style="font-size: 1.5em; font-weight: 600;">
+                            ${result.cielab_analysis.L_lightness}
+                        </span>
+                    </div>
+                    <div class="cielab-item">
+                        <strong>a* (Green-Red)</strong><br>
+                        <span style="font-size: 1.5em; font-weight: 600;">
+                            ${result.cielab_analysis.a_green_red}
+                        </span>
+                    </div>
+                    <div class="cielab-item">
+                        <strong>b* (Blue-Yellow)</strong><br>
+                        <span style="font-size: 1.5em; font-weight: 600;">
+                            ${result.cielab_analysis.b_blue_yellow}
+                        </span>
+                    </div>
+                `;
+            }
+
+            // Transport Survivability
+            if (result.transport_survivability) {
+                const transportGrid = document.getElementById('transportGrid');
+                transportGrid.innerHTML = `
+                    <div class="transport-item ${result.transport_survivability.short_distance.safe ? 'safe' : 'unsafe'}">
+                        <strong>Short Distance (&lt;100 miles)</strong><br>
+                        <span>${result.transport_survivability.short_distance.safe ? '✅' : '⚠️'} ${result.transport_survivability.short_distance.message}</span>
+                    </div>
+                    <div class="transport-item ${result.transport_survivability.medium_distance.safe ? 'safe' : 'unsafe'}">
+                        <strong>Medium Distance (100-500 miles)</strong><br>
+                        <span>${result.transport_survivability.medium_distance.safe ? '✅' : '⚠️'} ${result.transport_survivability.medium_distance.message}</span>
+                    </div>
+                    <div class="transport-item ${result.transport_survivability.long_distance.safe ? 'safe' : 'unsafe'}">
+                        <strong>Long Distance (&gt;500 miles)</strong><br>
+                        <span>${result.transport_survivability.long_distance.safe ? '✅' : '⚠️'} ${result.transport_survivability.long_distance.message}</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkModelStatus();
+            console.log('🍅 TomatoVision Pro - Ready for tomato analysis!');
+        });
+    </script>
+</body>
+</html>
