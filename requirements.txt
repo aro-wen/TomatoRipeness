@@ -1,4 +1,24 @@
-opencv-python==4.8.1.78
-numpy==1.24.3
-requests==2.31.0
-tqdm==4.66.1
+# YOLOv5 requirements
+# Usage: pip install -r requirements.txt
+
+# Base
+matplotlib>=3.3
+opencv-python>=4.1.1
+pillow>=7.1.2
+pyyaml>=5.3.1
+requests>=2.23.0
+scipy>=1.4.1
+tqdm>=4.64.0
+pandas>=1.1.4
+seaborn>=0.11.0
+
+# Deep Learning
+torch>=1.8.0
+torchvision>=0.9.0
+
+# Export
+onnx>=1.12.0
+
+# Additional
+psutil
+thop>=0.1.1
