@@ -25,7 +25,8 @@ class ESP32CAM_YOLO:
             nms_threshold: Non-maximum suppression threshold
         """
         self.esp32_ip = esp32_ip
-        self.stream_url = f"http://{esp32_ip}/stream"
+        # Try to detect the correct stream URL
+        self.stream_url = self._find_stream_url()
         self.capture_url = f"http://{esp32_ip}/capture"
         self.confidence_threshold = confidence_threshold
         self.nms_threshold = nms_threshold
@@ -201,14 +202,21 @@ class ESP32CAM_YOLO:
         
         try:
             print(f"Connecting to stream: {self.stream_url}")
-            # Open stream
-            stream = requests.get(self.stream_url, stream=True, timeout=5)
+            # Open stream with longer timeout
+            stream = requests.get(self.stream_url, stream=True, timeout=10)
+            
+            if stream.status_code != 200:
+                print(f"✗ Failed to connect. Status code: {stream.status_code}")
+                return
+                
+            print("✓ Connected! Processing frames...")
             bytes_data = bytes()
             
             frame_count = 0
             start_time = time.time()
+            frames_received = 0
             
-            for chunk in stream.iter_content(chunk_size=1024):
+            for chunk in stream.iter_content(chunk_size=4096):  # Increased chunk size
                 bytes_data += chunk
                 
                 # Find JPEG boundaries
@@ -218,6 +226,10 @@ class ESP32CAM_YOLO:
                 if a != -1 and b != -1:
                     jpg = bytes_data[a:b+2]
                     bytes_data = bytes_data[b+2:]
+                    
+                    frames_received += 1
+                    if frames_received == 1:
+                        print(f"✓ First frame received! Opening window...")
                     
                     # Decode image
                     image = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
@@ -245,9 +257,13 @@ class ESP32CAM_YOLO:
                             filename = f"detection_{int(time.time())}.jpg"
                             cv2.imwrite(filename, result_image)
                             print(f"✓ Screenshot saved: {filename}")
+                    else:
+                        print("⚠ Failed to decode frame")
                             
         except KeyboardInterrupt:
             print("\n✓ Stream interrupted by user")
+        except requests.exceptions.Timeout:
+            print(f"\n✗ Connection timeout. Make sure stream is accessible at {self.stream_url}")
         except requests.exceptions.ConnectionError:
             print(f"\n✗ Cannot connect to ESP32-CAM stream at {self.stream_url}")
             print("  Make sure ESP32-CAM is accessible via web browser first")
