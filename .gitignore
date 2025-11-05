@@ -1,0 +1,48 @@
+# Dataset (DON'T UPLOAD - TOO LARGE!)
+tomatoes-dataset/
+tomato_yolo_dataset/
+*.jpg
+*.png
+*.jpeg
+!*.png  # But allow PNG files in docs if you have them
+
+# Python Virtual Environment (DON'T UPLOAD)
+esp32_yolo_env/
+venv/
+env/
+ENV/
+
+# Training Outputs (LARGE FILES)
+yolov5/tomato_training/
+yolov5/runs/
+runs/
+
+# Model Weights (LARGE FILES - 5-20MB each)
+*.weights
+*.onnx
+*.pb
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE Settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# YOLOv5 Cache
+.cache/
+yolov5/__pycache__/
