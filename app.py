@@ -76,7 +76,7 @@ hr { margin: 0.6rem 0 1rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🍅 SariWise Tomato Ripeness Classifier (SVM + CIELAB)")
+st.title("🍅 SariWise Tomato Ripeness Classifier")
 st.caption("Upload a photo. We extract CIELAB color features and predict ripeness using your trained SVM.")
 
 # ----------------------
