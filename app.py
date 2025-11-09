@@ -476,12 +476,6 @@ try:
     model, le = load_model()
     st.success("Model loaded ✅")
     st.caption("**Classes:** " + ", ".join(map(str, le.classes_)))
-    
-    # Add model debugging information
-    st.sidebar.markdown("**Model Info:**")
-    st.sidebar.write(f"Model type: {type(model)}")
-    st.sidebar.write(f"Label encoder classes: {le.classes_}")
-    st.sidebar.write(f"Has predict method: {hasattr(model, 'predict')}")
         
 except Exception as e:
     st.error("Could not load model files. Ensure `svm_lab.joblib` and `label_encoder.joblib` are in the app folder.")
