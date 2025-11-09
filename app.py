@@ -16,7 +16,7 @@ except ImportError as e:
 # ----------------------
 # App settings
 # ----------------------
-st.set_page_config(page_title="Tomato Ripeness (SVM + CIELAB)", page_icon="🍅", layout="wide")
+st.set_page_config(page_title="SariWise", page_icon="🍅", layout="wide")
 
 # ----------------------
 # Gemini AI Configuration
@@ -76,7 +76,7 @@ hr { margin: 0.6rem 0 1rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🍅 Tomato Ripeness Classifier (SVM + CIELAB)")
+st.title("🍅 SariWise Tomato Ripeness Classifier (SVM + CIELAB)")
 st.caption("Upload a photo. We extract CIELAB color features and predict ripeness using your trained SVM.")
 
 # ----------------------
